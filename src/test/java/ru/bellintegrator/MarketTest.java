@@ -18,7 +18,7 @@ public class MarketTest extends BaseTest {
         String url = "https://yandex.ru/all";
         String serviceTitle = "Маркет";
         open(url, YandexAllServices.class).goToService(serviceTitle)
-                .toCategorySection("электроника", "смартфоны", MarketSection.class);
+                .toCategorySection("Электроника", "Смартфоны", MarketSection.class);
 
     }
 }

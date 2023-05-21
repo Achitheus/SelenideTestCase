@@ -8,7 +8,7 @@ public class BaseTest {
     @BeforeAll
     public static void init() {
         Configuration.browser = "chrome";
-        Configuration.timeout = 6_000;
+        Configuration.timeout = 10_000;
         ChromeOptions options = new ChromeOptions();
         options.addArguments("--user-data-dir=C:\\Users\\Admin\\IdeaProjects\\BellLessonSelenide\\chrome-profiles");
         options.addArguments("--profile-directory=Profile3");
