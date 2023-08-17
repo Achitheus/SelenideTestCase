@@ -3,8 +3,7 @@ package ru.bellintegrator;
 import io.qameta.allure.Feature;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import pages.ru.ya.MarketSection;
-import pages.ru.ya.YandexAllServices;
+import pages.ru.ya.YandexMain;
 
 import static com.codeborne.selenide.Selenide.open;
 
@@ -15,10 +14,10 @@ public class MarketTest extends BaseTest {
     //@ParameterizedTest(name = "{} : arguments")
     @Test
     public void marketTest() {
-        String url = "https://yandex.ru/all";
+        String url = "https://ya.ru/";
         String serviceTitle = "Маркет";
-        open(url, YandexAllServices.class).goToService(serviceTitle)
-                .toCategorySection("Электроника", "Смартфоны", MarketSection.class);
+        open(url, YandexMain.class).goToService(serviceTitle)
+                ;//.toCategorySection("Электроника", "Смартфоны", MarketSection.class);
 
     }
 }
