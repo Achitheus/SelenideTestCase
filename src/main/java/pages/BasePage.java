@@ -1,4 +1,4 @@
-package pages.ru.ya;
+package pages;
 
 public abstract class BasePage {
 }
