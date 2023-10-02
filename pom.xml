@@ -54,14 +54,6 @@
             <version>2.13.6</version>
         </dependency>
 
-
-        <!--Для скринов-->
-        <dependency>
-            <groupId>commons-io</groupId>
-            <artifactId>commons-io</artifactId>
-            <version>2.4</version>
-        </dependency>
-
         <!-- Для пропертей -->
         <dependency>
             <groupId>org.aeonbits.owner</groupId>

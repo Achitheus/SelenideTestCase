@@ -2,6 +2,7 @@ package helpers;
 
 import com.codeborne.selenide.Command;
 import com.codeborne.selenide.SelenideElement;
+import com.codeborne.selenide.ex.UIAssertionError;
 
 import java.util.function.Function;
 
@@ -12,7 +13,7 @@ public class SelenideCustom {
             try {
                 function.apply(proxy);
                 return true;
-            } catch (Throwable th) {
+            } catch (UIAssertionError th) {
                 return false;
             }
         };

@@ -7,7 +7,7 @@ import pages.ru.yandex.market.MarketMain;
 import static com.codeborne.selenide.Selenide.*;
 
 public class YandexMain {
-    @Step("Переход в сервис {serviceName}")
+    @Step("Переход в сервис \"{serviceName}\"")
     public MarketMain goToService(String serviceName) {
         $x("//input[@id='text' and @aria-label='Запрос']").click();
         if (!goToServiceFast(serviceName)) {

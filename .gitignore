@@ -4,3 +4,4 @@ build
 allure-results
 .idea
 log
+.allure
