@@ -8,7 +8,7 @@
     </appender>
 
     <appender name = "file" class = "ch.qos.logback.core.FileAppender" append="false">
-        <file>${AUTOMATION_PROJECTS}\SelenideTestCase\log\selenideTestCase.log</file>
+        <file>${user.dir}\log\selenideTestCase.log</file>
         <encoder>
             <charset>UTF-8</charset>
             <pattern>%date %-5level [%file:%line] %msg%n</pattern>

@@ -14,30 +14,33 @@ import org.openqa.selenium.chrome.ChromeOptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static helpers.Properties.testProperties;
+
 @ExtendWith({SoftAssertsExtension.class})
 public class BaseTest {
     public static final Logger log = LoggerFactory.getLogger(BaseTest.class);
 
     @BeforeAll
     public static void setup() {
+        log.info("\n<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<   NEW TESTS RUN   >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>   <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<   NEW TESTS RUN   >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>   <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<   NEW TESTS RUN   >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
         SelenideLogger.addListener("AllureSelenide",
                 new AllureSelenide().includeSelenideSteps(false));
-        log.info("\n<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<   NEW TESTS RUN   >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>   <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<   NEW TESTS RUN   >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>   <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<   NEW TESTS RUN   >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
     }
 
     @BeforeEach
     public void options(TestInfo testInfo) {
         log.info(" <<<<<<<<<  " + testInfo.getDisplayName() + "  is running >>>>>>>>>");
         ChromeOptions options = new ChromeOptions();
-        // Как вариант можно еще абс. путь задать с помощью System.getProperty("user.dir")
-        options.addArguments("--user-data-dir=" + System.getenv("AUTOMATION_PROJECTS")
-                + "\\SelenideTestCase\\chrome-profiles");
-        options.addArguments("--profile-directory=profileForTests");
-        options.addArguments("--disable-extensions");
         Configuration.browserCapabilities = options;
         Configuration.browser = "chrome";
         Configuration.timeout = 6_000;
         Configuration.browserSize = "1920x1080";
+        options.addArguments("--disable-extensions");
+        if (!testProperties.useChromeProfile()) {
+            return;
+        }
+        options.addArguments("--user-data-dir=" + testProperties.chromeDir());
+        options.addArguments("--profile-directory=" + testProperties.profileDir());
     }
 
     @AfterEach
