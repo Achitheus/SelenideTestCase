@@ -8,7 +8,12 @@ import java.util.Set;
 import java.util.stream.Stream;
 
 public class DataProvider {
-
+    /**
+     * Предоставляет данные для параметризованного теста.
+     *
+     * @return Поток наборов аргументов.
+     * @author Юрий Юрченко
+     */
     public static Stream<Arguments> checkSearchResultsByEnumFilter() {
         String url = "https://ya.ru/";
         String serviceTitle = "Маркет";

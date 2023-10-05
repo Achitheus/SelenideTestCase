@@ -12,8 +12,8 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import pages.ru.yandex.YandexMain;
-import pages.ru.yandex.market.GoodsCategory;
-import pages.ru.yandex.market.GoodsCategory.CheckBoxProcessType;
+import pages.ru.yandex.market.CategoryGoods;
+import pages.ru.yandex.market.CategoryGoods.CheckboxProcessMode;
 import ru.bellintegrator.BaseTest;
 
 import java.time.Duration;
@@ -32,29 +32,58 @@ public class MarketTest extends BaseTest {
     @RegisterExtension
     static ScreenShooterExtension screenshotEmAll = new ScreenShooterExtension(true);
 
+    /**
+     * Тест-кейс: <p>
+     * 1. Открыть браузер и развернуть на весь экран. <p>
+     * 2. Зайти на https://ya.ru/ <p>
+     * 3. Нажать на строку поиска -> Кликнуть по Маркет <p>
+     * 4. Перейти в Каталог -> Навести курсор на раздел  Электроника <p>
+     * 5. Выбрать раздел Смартфоны <p>
+     * 6. Задать параметр «Производитель» Apple. <p>
+     * 7. Дождаться результатов поиска. <p>
+     * 8. Убедиться, что в выборку попали только iPhone. Если страниц несколько – проверить все. <p>
+     * Тест должен работать для любого производителя из списка:
+     * ASUS, Black Shark, OnePlus, Google, Seals.
+     *
+     * @param url         Начальная страница с сервисами, на которую следует перейти.
+     * @param service     Сервис, в который следует перейти.
+     * @param section     Секция, внутри которой содержится нужная {@code category}.
+     * @param category    Категория товаров, в которую следует перейти.
+     * @param enumFilters Фильтры перечислений в формате Map<Название фильтра, набор названий чекбоксов>.
+     * @author Юрий Юрченко
+     */
     @Feature("Поиск товаров")
-    @DisplayName("Соответствие результатов поиска установленному фильтру")
+    @DisplayName("Соответствие результатов поиска установленным фильтрам")
     @ParameterizedTest(name = "{displayName} : {arguments}")
     @MethodSource(value = "helpers.DataProvider#checkSearchResultsByEnumFilter")
     public void marketTest(String url, String service, String section, String category,
                            Map<String, Set<String>> enumFilters) {
-        GoodsCategory goodsCategory =
+        CategoryGoods categoryGoods =
                 open(url, YandexMain.class)
                         .goToService(service)
-                        .toSectionCategory(section, category, GoodsCategory.class)
-                        .setEnumFilters(enumFilters, CheckBoxProcessType.MARK);
+                        .toSectionCategory(section, category, CategoryGoods.class)
+                        .setEnumFilters(enumFilters, CheckboxProcessMode.MARK);
 
-        marketCheckAllPages(goodsCategory, enumFilters);
+        marketCheckAllPages(categoryGoods, enumFilters);
     }
 
-    //TODO возможно стоит этот метод обобщить, сделать универсальным и поместить в ПО
+    /**
+     * Проходит по всем страницам, проверяя каждую на соответствие товаров установленным
+     * фильтрам поиска {@code enumFilters}.
+     *
+     * @param categoryGoods Пэйдж обджект страницы (с пагинацией) товаров, подлежащих проверке.
+     * @param enumFilters   Фильтры перечислений в формате Map<Название фильтра, набор названий чекбоксов>,
+     *                      на соответствие которым производится проверка товаров.
+     * @author Юрий Юрченко
+     */
+    // TODO возможно стоит этот метод обобщить, сделать универсальным и поместить в ПО
     @Step("Проверка товаров на всех страницах")
-    public static void marketCheckAllPages(GoodsCategory goodsCategory, Map<String, Set<String>> enumFilters) {
+    public static void marketCheckAllPages(CategoryGoods categoryGoods, Map<String, Set<String>> enumFilters) {
         int infinityCyclePreventer = 0;
         do {
             infinityCyclePreventer++;
 
-            ElementsCollection productNameEls = goodsCategory.getPageProductNames();
+            ElementsCollection productNameEls = categoryGoods.getPageProductNames();
             log.trace("Названия товаров на {} странице: {}", infinityCyclePreventer, productNameEls.texts());
 
             SelenideElement badName = productNameEls.find(not(match("",
@@ -71,7 +100,7 @@ public class MarketTest extends BaseTest {
                             : "На стр. " + infinityCyclePreventer + " все названия товаров соответствуют фильтру \"Производитель\": "
                             + enumFilters.get("Производитель"));
             assertionMode = STRICT;
-        } while (goodsCategory.nextPage() && infinityCyclePreventer < 1000);
+        } while (categoryGoods.nextPage() && infinityCyclePreventer < 1000);
         log.info("Обработано {} страниц товаров", infinityCyclePreventer);
     }
 

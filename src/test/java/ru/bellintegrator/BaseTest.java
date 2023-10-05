@@ -4,6 +4,7 @@ import com.codeborne.selenide.Configuration;
 import com.codeborne.selenide.Selenide;
 import com.codeborne.selenide.junit5.SoftAssertsExtension;
 import com.codeborne.selenide.logevents.SelenideLogger;
+import helpers.TestProperties;
 import io.qameta.allure.selenide.AllureSelenide;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -27,6 +28,14 @@ public class BaseTest {
                 new AllureSelenide().includeSelenideSteps(false));
     }
 
+    /**
+     * Настройка тестов и окружения. Тесты запускаются из-под профиля хрома, если соответствующее
+     * значение проперти {@link TestProperties#useChromeProfile()} установлено в {@code true}.
+     * Перед запуском каждого теста выводит его название в лог.
+     *
+     * @param testInfo Объект, содержащий информацию о запускаемом тесте.
+     * @author Юрий Юрченко
+     */
     @BeforeEach
     public void options(TestInfo testInfo) {
         log.info(" <<<<<<<<<  " + testInfo.getDisplayName() + "  is running >>>>>>>>>");
