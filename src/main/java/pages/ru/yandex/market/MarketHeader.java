@@ -7,6 +7,11 @@ import pages.BasePage;
 
 import static com.codeborne.selenide.Selenide.*;
 
+/**
+ * Пэйдж обджект шапки сайта Я.Маркета.
+ *
+ * @author Юрий Юрченко
+ */
 public class MarketHeader extends BasePage {
     /**
      * Кликает по кнопке "открыть/закрыть каталог", наводит курсор на указанную {@code section},

@@ -2,7 +2,6 @@ package pages.ru.yandex.market;
 
 import com.codeborne.selenide.ElementsCollection;
 import com.codeborne.selenide.SelenideElement;
-import helpers.SelenideCustom;
 import io.qameta.allure.Step;
 import org.openqa.selenium.By;
 import org.slf4j.Logger;
@@ -34,7 +33,8 @@ public class CategoryGoods extends MarketHeader {
     private final String elementBelowTheGoodsSelector = "//noindex//*[@data-auto='creditDisclaimer']";
 
     /**
-     * Обрабатывает чекбоксы фильтров перечислений в режиме {@code processMode}.
+     * Обрабатывает чекбоксы фильтров перечислений в режиме {@code processMode}, после чего
+     * ждет загрузки товаров.
      *
      * @param enumFilters Фильтры перечислений в формате ключ - название фильтра, значение - набор чекбоксов.
      * @param processMode Режим обработки чекбоксов.
@@ -52,7 +52,8 @@ public class CategoryGoods extends MarketHeader {
     }
 
     /**
-     * Отмечает чекбоксы фильтров перечислений, если они еще не отмечены.
+     * Отмечает чекбоксы фильтров перечислений, если они еще не отмечены, после чего
+     * ждет загрузки товаров.
      *
      * @param enumFilters Фильтры перечислений в формате ключ - название фильтра, значение - набор чекбоксов.
      * @return Текущий объект данного класса.
@@ -64,6 +65,8 @@ public class CategoryGoods extends MarketHeader {
 
     /**
      * Обрабатывает чекбоксы фильтра перечислений в режиме {@code processMode}.
+     * После обработки чекбоксов ожидает загрузки товаров, поэтому, если фильтров несколько,
+     * предпочтительнее использовать {@link #setEnumFilters(Map, CheckboxProcessMode)}
      *
      * @param textInFilterTitle Текст в названии фильтра перечислений (чувствительный к регистру).
      * @param processMode       Режим обработки чекбоксов (отметить или снять отметку).
@@ -80,6 +83,8 @@ public class CategoryGoods extends MarketHeader {
 
     /**
      * Отмечает чекбоксы фильтра перечислений, если они еще не отмечены.
+     * После обработки чекбоксов ожидает загрузки товаров, поэтому, если фильтров несколько,
+     * предпочтительнее использовать {@link #setEnumFilters(Map)}
      *
      * @param textInFilterTitle Текст в названии фильтра перечислений (чувствительный к регистру).
      * @param targets           Набор названий чекбоксов, подлежащих обработке.
@@ -90,6 +95,14 @@ public class CategoryGoods extends MarketHeader {
         return setEnumFilter(textInFilterTitle, targets, CheckboxProcessMode.MARK);
     }
 
+    /**
+     * Обрабатывает чекбоксы фильтра перечислений в режиме {@code processMode}, чувствителен к регистру.
+     *
+     * @param textInFilterTitle Текст, содержащийся в названии фильтра перечислений.
+     * @param targets           Набор названий чекбоксов, подлежащих обработке.
+     * @param processMode       Режим обработки чекбоксов.
+     * @author Юрий Юрченко
+     */
     @Step("Обработка в фильтре перечислений \"{textInFilterTitle}\" чекбоксов: {targets}")
     private void setEnumFilterWithoutWait(String textInFilterTitle, Set<String> targets, CheckboxProcessMode processMode) {
         Set<String> mutableTargets = new HashSet<>(targets);
@@ -107,11 +120,23 @@ public class CategoryGoods extends MarketHeader {
         }
     }
 
+    /**
+     * Скроллит вниз, затем возвращает набор элементов, содержащих названия товаров.
+     *
+     * @return Набор элементов, содержащих названия товаров.
+     * @author Юрий Юрченко
+     */
     public ElementsCollection getPageProductNames() {
         scrollToBottom();
         return $$x(productNamesSelector);
     }
 
+    /**
+     * Нажимает кнопку "next page", если она присутствует на странице, затем ждет загрузки товаров.
+     *
+     * @return {@code true}, если кнопка "next page" была нажата, иначе {@code false}.
+     * @author Юрий Юрченко
+     */
     public boolean nextPage() {
         SelenideElement nextButton = $x("//div[@data-apiary-widget-name=\"@marketfront/SearchPager\"]//div[@data-baobab-name='next']//span");
         if (!nextButton.exists()) {
@@ -124,15 +149,15 @@ public class CategoryGoods extends MarketHeader {
 
     /**
      * Ищет на странице в {@code filter} чекбоксы по названиям из {@code mutableTargets}
-     * и обрабатывает их, отмечая или снимая отметки в зависимости от {@code processMode}.
-     * Не чувствителен к регистру, игнорирует множественные whitespaces. <p>
+     * и обрабатывает их в соответствии с {@code processMode}.
+     * Чувствителен к регистру, проверяет на точное соответствие. <p>
      * Предполагается, что метод следует вызывать дважды: до раскрытия списка чекбоксов
      * (со значением {@code strictMode = false}) и после (со {@code strictMode = true}).
      *
      * @param filter         Фильтр, в котором обрабатываются чекбоксы.
      * @param mutableTargets Названия чекбоксов, которые следует обработать.
-     * @param processMode    Режим обработки чекбоксов (отметить или снять отметку).
-     * @param strictMode     Режим работы. При {@code false}, метод не падает с ошибкой когда среди
+     * @param processMode    Режим обработки чекбоксов.
+     * @param strictMode     Режим работы. При {@code false}, метод не падает с ошибкой, когда среди
      *                       {@code mutableTargets} обнаруживается название для которого
      *                       на странице нет соответствующего чекбокса.
      * @author Юрий Юрченко
@@ -143,9 +168,9 @@ public class CategoryGoods extends MarketHeader {
             checkboxList.shouldHave(containExactTextsCaseSensitive(mutableTargets.toArray(new String[0])));
         log.debug("В текущем фильтре обнаружено {} чекбоксов. Обрабатываю", checkboxList.size());
         for (SelenideElement checkbox : checkboxList) {
-            String checkboxName = checkbox.$x(".//span[text()]").getText();
+            String checkboxName = checkbox.getText();
             String target = mutableTargets.stream().filter(
-                    checkboxName::contains).findFirst().orElse("");
+                    checkboxName::equals).findFirst().orElse("");
             if (target.isEmpty()) {
                 continue;
             }
@@ -159,10 +184,9 @@ public class CategoryGoods extends MarketHeader {
     }
 
     /**
-     * С помощью поля поиска ищет на странице в {@code filter} чекбоксы по названиям
-     * из {@code mutableTargets} и обрабатывает их, отмечая или снимая отметки
-     * в зависимости от {@code processMode}. Не чувствителен к регистру, игнорирует
-     * множественные whitespaces.
+     * С помощью поля поиска ищет в {@code filter} чекбоксы по названиям
+     * из {@code mutableTargets} и обрабатывает их в соответствии с {@code processMode}.
+     * Чувствителен к регистру, игнорирует множественные whitespaces.
      *
      * @param filter      Фильтр, в котором обрабатываются чекбоксы.
      * @param targetSet   Названия чекбоксов, которые следует обработать.
@@ -177,13 +201,13 @@ public class CategoryGoods extends MarketHeader {
             filterSearchField.clear();
             filterSearchField.sendKeys(target);
             SelenideElement checkbox = filter.$x(".//*[@data-zone-name = 'FilterValue'][1]")
-                    .shouldHave(partialText(target));
+                    .shouldHave(exactTextCaseSensitive(target));
             clickCheckboxIfNecessary(checkbox, processMode);
         }
     }
 
     /**
-     * Производит скролл до объекта, расположенного ниже товаров, представленных на странице
+     * Производит скролл до объекта, расположенного ниже товаров
      * (при этом в DOM-е появляются все товары страницы).
      *
      * @author Юрий Юрченко
@@ -200,7 +224,7 @@ public class CategoryGoods extends MarketHeader {
     private void waitGoodsLoading() {
         SelenideElement spinner = $x("//*[@data-grabber='SearchSerp']//*[@data-auto='spinner']");
         log.trace("Ожидаю появления спиннера загрузки товаров");
-        if (spinner.execute(SelenideCustom.metCondition(el -> el.should(appear, Duration.ofSeconds(1))))) {
+        if (spinner.execute(metCondition(el -> el.should(appear, Duration.ofSeconds(1))))) {
             log.trace("Спиннер загрузки товаров появился");
             spinner.should(disappear);
         } else {
@@ -260,8 +284,7 @@ public class CategoryGoods extends MarketHeader {
     }
 
     /**
-     * Сообщает о наличии в {@code filter} AJAX-овского "датаВиртуозоСкроллера" (виртуозно названного надо признать).
-     * А я виртуозно это тут задокументировал, а Вы виртуозно читаете. И т.д. пока не выйдем из рекурсии...
+     * Сообщает о наличии в {@code filter} AJAX-овского "датаВиртуозоСкроллера".
      *
      * @param filter Фильтр, проверяемый на наличие AJAX скроллера.
      * @return {@code true}, если AJAX скроллер обнаружен, иначе {@code false}.
