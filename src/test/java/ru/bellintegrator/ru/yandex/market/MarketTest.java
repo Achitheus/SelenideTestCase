@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import pages.ru.yandex.YandexMain;
 import pages.ru.yandex.market.CategoryGoods;
 import pages.ru.yandex.market.CategoryGoods.CheckboxProcessMode;
+import pages.ru.yandex.market.MarketMain;
 import ru.bellintegrator.BaseTest;
 
 import java.time.Duration;
@@ -60,8 +61,8 @@ public class MarketTest extends BaseTest {
                            Map<String, Set<String>> enumFilters) {
         CategoryGoods categoryGoods =
                 open(url, YandexMain.class)
-                        .goToService(service)
-                        .toSectionCategory(section, category, CategoryGoods.class)
+                        .goToService(service, MarketMain.class)
+                        .toSectionCategory(section, category)
                         .setEnumFilters(enumFilters, CheckboxProcessMode.MARK);
 
         marketCheckAllPages(categoryGoods, enumFilters);
@@ -82,7 +83,7 @@ public class MarketTest extends BaseTest {
         int infinityCyclePreventer = 0;
         do {
             infinityCyclePreventer++;
-
+            log.debug("Страница {}", infinityCyclePreventer);
             ElementsCollection productNameEls = categoryGoods.getPageProductNames();
             log.trace("Названия товаров на {} странице: {}", infinityCyclePreventer, productNameEls.texts());
 

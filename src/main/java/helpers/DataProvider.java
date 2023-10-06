@@ -21,12 +21,12 @@ public class DataProvider {
         String section1 = "Электроника";
         String category1 = "Смартфоны";
         Map<String, Set<String>> enumFilters1 = new HashMap<>();
-        enumFilters1.put("Производитель", Set.of("apple"));
+        enumFilters1.put("Производитель", Set.of("Apple"));
 
         String section2 = "Ноутбуки и компьютеры";
         String category2 = "Ноутбуки";
         Map<String, Set<String>> enumFilters2 = new HashMap<>();
-        enumFilters2.put("Производитель", Set.of("samsung", "ark", "asus", "blackberry"));
+        enumFilters2.put("Производитель", Set.of("Samsung", "Ark", "ASUS", "BlackBerry"));
 
         return Stream.of(
                 Arguments.of(url, serviceTitle, section1, category1, enumFilters1),

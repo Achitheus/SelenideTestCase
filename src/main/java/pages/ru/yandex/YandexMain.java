@@ -2,26 +2,28 @@ package pages.ru.yandex;
 
 import com.codeborne.selenide.SelenideElement;
 import io.qameta.allure.Step;
-import pages.ru.yandex.market.MarketMain;
+import pages.BasePage;
 
 import static com.codeborne.selenide.Selenide.*;
 
-public class YandexMain {
+public class YandexMain extends BasePage {
     /**
-     * Переходит в указанный {@code service} (чувствительно к регистру).
+     * Переходит в указанный сервис по {@code serviceName} (чувствительно к регистру).
      *
      * @param serviceName Название сервиса, в который следует перейти.
-     * @return // TODO с какой стати всегда MarketMain? Исправить следующим коммитом
+     * @param nextPage    Объект класса {@link Class}, с помощью которого создается возвращаемый данным методом объект.
+     * @param <T>         Тип объекта, возвращаемого данным методом.
+     * @return Пэйдж обджект типа {@code T}.
      * @author Юрий Юрченко
      */
     @Step("Переход в сервис \"{serviceName}\"")
-    public MarketMain goToService(String serviceName) {
+    public <T> T goToService(String serviceName, Class<T> nextPage) {
         $x("//input[@id='text' and @aria-label='Запрос']").click();
         if (!goToServiceFast(serviceName)) {
             goToServiceViaAllServicesButton(serviceName);
         }
         switchTo().window(1);
-        return page(MarketMain.class);
+        return nextPage.cast(page(nextPage));
     }
 
     /**
@@ -49,8 +51,10 @@ public class YandexMain {
      */
     private boolean goToServiceFast(String serviceName) {
         SelenideElement targetService = $x("//ul[@class='services-suggest__list']//li[.=('" + serviceName + "')]");
-        if (targetService.exists())
+        if (targetService.exists()) {
             targetService.click();
-        return targetService.exists();
+            return true;
+        }
+        return false;
     }
 }

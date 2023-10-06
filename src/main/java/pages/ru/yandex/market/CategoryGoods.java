@@ -7,14 +7,13 @@ import io.qameta.allure.Step;
 import org.openqa.selenium.By;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import pages.BasePage;
 
 import java.time.Duration;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
+import static com.codeborne.selenide.CollectionCondition.containExactTextsCaseSensitive;
 import static com.codeborne.selenide.CollectionCondition.sizeGreaterThan;
 import static com.codeborne.selenide.Condition.*;
 import static com.codeborne.selenide.Selenide.$$x;
@@ -26,7 +25,7 @@ import static helpers.SelenideCustom.metCondition;
  *
  * @author Юрий Юрченко
  */
-public class CategoryGoods extends BasePage {
+public class CategoryGoods extends MarketHeader {
 
     public static final Logger log = LoggerFactory.getLogger(CategoryGoods.class);
 
@@ -35,37 +34,69 @@ public class CategoryGoods extends BasePage {
     private final String elementBelowTheGoodsSelector = "//noindex//*[@data-auto='creditDisclaimer']";
 
     /**
-     * Отмечает чекбоксы фильтров перечислений.
+     * Обрабатывает чекбоксы фильтров перечислений в режиме {@code processMode}.
      *
      * @param enumFilters Фильтры перечислений в формате ключ - название фильтра, значение - набор чекбоксов.
-     * @param processMode Режим обработки чекбоксов (отметить или снять отметку).
+     * @param processMode Режим обработки чекбоксов.
      * @return Текущий объект данного класса.
      * @author Юрий Юрченко
+     * @see CheckboxProcessMode
      */
     @Step("Установка фильтров перечислений")
     public CategoryGoods setEnumFilters(Map<String, Set<String>> enumFilters, CheckboxProcessMode processMode) {
         for (Map.Entry<String, Set<String>> enumFilter : enumFilters.entrySet()) {
-            setEnumFilter(enumFilter.getKey(), processMode, enumFilter.getValue());
+            setEnumFilterWithoutWait(enumFilter.getKey(), enumFilter.getValue(), processMode);
         }
+        waitGoodsLoading();
         return this;
     }
 
     /**
-     * Отмечает чекбоксы фильтра перечислений.
+     * Отмечает чекбоксы фильтров перечислений, если они еще не отмечены.
+     *
+     * @param enumFilters Фильтры перечислений в формате ключ - название фильтра, значение - набор чекбоксов.
+     * @return Текущий объект данного класса.
+     * @author Юрий Юрченко
+     */
+    public CategoryGoods setEnumFilters(Map<String, Set<String>> enumFilters) {
+        return setEnumFilters(enumFilters, CheckboxProcessMode.MARK);
+    }
+
+    /**
+     * Обрабатывает чекбоксы фильтра перечислений в режиме {@code processMode}.
      *
      * @param textInFilterTitle Текст в названии фильтра перечислений (чувствительный к регистру).
      * @param processMode       Режим обработки чекбоксов (отметить или снять отметку).
      * @param targets           Набор названий чекбоксов, подлежащих обработке.
      * @return Текущий объект данного класса.
      * @author Юрий Юрченко
+     * @see CheckboxProcessMode
      */
-    @Step("Установка фильтра перечислений \"{textInFilterTitle}\" значениями: {targets}")
-    public CategoryGoods setEnumFilter(String textInFilterTitle, CheckboxProcessMode processMode, Set<String> targets) {
+    public CategoryGoods setEnumFilter(String textInFilterTitle, Set<String> targets, CheckboxProcessMode processMode) {
+        setEnumFilterWithoutWait(textInFilterTitle, targets, processMode);
+        waitGoodsLoading();
+        return this;
+    }
+
+    /**
+     * Отмечает чекбоксы фильтра перечислений, если они еще не отмечены.
+     *
+     * @param textInFilterTitle Текст в названии фильтра перечислений (чувствительный к регистру).
+     * @param targets           Набор названий чекбоксов, подлежащих обработке.
+     * @return Текущий объект данного класса.
+     * @author Юрий Юрченко
+     */
+    public CategoryGoods setEnumFilter(String textInFilterTitle, Set<String> targets) {
+        return setEnumFilter(textInFilterTitle, targets, CheckboxProcessMode.MARK);
+    }
+
+    @Step("Обработка в фильтре перечислений \"{textInFilterTitle}\" чекбоксов: {targets}")
+    private void setEnumFilterWithoutWait(String textInFilterTitle, Set<String> targets, CheckboxProcessMode processMode) {
         Set<String> mutableTargets = new HashSet<>(targets);
         SelenideElement filter = getFilterBy(textInFilterTitle);
         processAvailableCheckBoxes(filter, mutableTargets, processMode, false);
         if (mutableTargets.isEmpty())
-            return this;
+            return;
         expandCheckboxListAvoidingBug(filter);
         if (soCalledDataVirtuosoScrollerIsEnabled(filter)) {
             log.debug("Обнаружен асинхронный скроллер в фильтре \"{}\"", textInFilterTitle);
@@ -74,11 +105,9 @@ public class CategoryGoods extends BasePage {
             log.debug("Асинхронный скроллер в фильтре \"{}\" не обнаружен", textInFilterTitle);
             processAvailableCheckBoxes(filter, mutableTargets, processMode, true);
         }
-        return this;
     }
 
     public ElementsCollection getPageProductNames() {
-        waitGoodsLoading();
         scrollToBottom();
         return $$x(productNamesSelector);
     }
@@ -89,6 +118,7 @@ public class CategoryGoods extends BasePage {
             return false;
         }
         nextButton.click();
+        waitGoodsLoading();
         return true;
     }
 
@@ -108,19 +138,22 @@ public class CategoryGoods extends BasePage {
      * @author Юрий Юрченко
      */
     private void processAvailableCheckBoxes(SelenideElement filter, Set<String> mutableTargets, CheckboxProcessMode processMode, boolean strictMode) {
-        ElementsCollection optionList = filter.$$x(".//*[@data-zone-name = 'FilterValue']")
-                .shouldHave(sizeGreaterThan(0));
-        log.debug("В текущем фильтре обнаружено {} чекбоксов. Обрабатываю", optionList.size());
-        for (Iterator<String> iterator = mutableTargets.iterator(); iterator.hasNext(); ) {
-            String target = iterator.next();
-            SelenideElement checkbox = optionList.find(text(target));
-            if (strictMode) {
-                clickCheckboxIfNecessary(checkbox, processMode);
+        ElementsCollection checkboxList = filter.$$x(".//*[@data-zone-name = 'FilterValue']").shouldHave(sizeGreaterThan(0));
+        if (strictMode)
+            checkboxList.shouldHave(containExactTextsCaseSensitive(mutableTargets.toArray(new String[0])));
+        log.debug("В текущем фильтре обнаружено {} чекбоксов. Обрабатываю", checkboxList.size());
+        for (SelenideElement checkbox : checkboxList) {
+            String checkboxName = checkbox.$x(".//span[text()]").getText();
+            String target = mutableTargets.stream().filter(
+                    checkboxName::contains).findFirst().orElse("");
+            if (target.isEmpty()) {
                 continue;
             }
-            if (checkbox.exists()) {
-                clickCheckboxIfNecessary(checkbox, processMode);
-                iterator.remove();
+            clickCheckboxIfNecessary(checkbox, processMode);
+            mutableTargets.remove(target);
+            if (mutableTargets.isEmpty()) {
+                log.info("Все заданные чекбоксы обработаны");
+                return;
             }
         }
     }
@@ -173,7 +206,6 @@ public class CategoryGoods extends BasePage {
         } else {
             log.trace("Спиннер загрузки товаров не появился");
         }
-
     }
 
     /**
@@ -248,12 +280,17 @@ public class CategoryGoods extends BasePage {
      * @author Юрий Юрченко
      */
     private void clickCheckboxIfNecessary(SelenideElement option, CheckboxProcessMode processMode) {
-        if (processMode.equals(CheckboxProcessMode.UNMARK)) {
-            if (checkBoxIsMarked(option)) option.shouldBe(interactable).click();
-        } else {
-            if (!checkBoxIsMarked(option)) option.shouldBe(interactable).click();
+        switch (processMode) {
+            case UNMARK:
+                if (checkBoxIsMarked(option)) option.shouldBe(interactable).click();
+                break;
+            case MARK:
+                if (!checkBoxIsMarked(option)) option.shouldBe(interactable).click();
+                break;
+            case CHANGE:
+                option.shouldBe(interactable).click();
+                break;
         }
-
     }
 
     /**
@@ -275,14 +312,18 @@ public class CategoryGoods extends BasePage {
      */
     public enum CheckboxProcessMode {
         /**
-         * Экземпляр перечисления, означающий, что чекбоксы следует отмечать.
-         * Если чекбокс уже отмечен, его состояние менять не следует.
+         * Режим обработки, при котором на чекбоксы отметки ставятся.
+         * Если чекбокс уже отмечен, его состояние не меняется.
          */
         MARK,
         /**
-         * Экземпляр перечисления, означающий, что с чекбоксов отметки следует снимать.
-         * Если чекбокс не отмечен, его состояние менять не следует.
+         * Режим обработки, при котором с чекбоксов отметки снимаются.
+         * Если чекбокс не отмечен, его состояние не меняется.
          */
-        UNMARK
+        UNMARK,
+        /**
+         * Режим обработки, при котором состояния чекбоксов меняются на противоположные.
+         */
+        CHANGE
     }
 }
