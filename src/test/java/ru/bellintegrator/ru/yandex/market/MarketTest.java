@@ -24,6 +24,8 @@ import static com.codeborne.selenide.AssertionMode.STRICT;
 import static com.codeborne.selenide.Condition.*;
 import static com.codeborne.selenide.Configuration.assertionMode;
 import static com.codeborne.selenide.Selenide.open;
+import static helpers.AllureCustom.markOuterStepAsFailedAndStop;
+import static helpers.AllureCustom.stepSoftAssert;
 import static helpers.Assertions.selenideAssertWithStep;
 
 public class MarketTest extends BaseTest {
@@ -32,7 +34,7 @@ public class MarketTest extends BaseTest {
     /**
      * Тест-кейс: <p>
      * 1. Открыть браузер и развернуть на весь экран. <p>
-     * 2. Зайти на https://ya.ru/ <p>
+     * 2. Перейти на {@code url}<p>
      * 3. Нажать на строку поиска -> Кликнуть по Маркет <p>
      * 4. Перейти в Каталог -> Навести курсор на раздел  Электроника <p>
      * 5. Выбрать раздел Смартфоны <p>
@@ -77,29 +79,32 @@ public class MarketTest extends BaseTest {
     // TODO превратить метод во что-то реюзабельное и вменяемое
     @Step("Проверка товаров на всех страницах")
     public static void marketCheckAllPages(CategoryGoods categoryGoods, Map<String, Set<String>> enumCheckSets) {
-        int infinityCyclePreventer = 0;
+        int infCyclePreventer = 0;
+        boolean badNameExists;
         do {
-            infinityCyclePreventer++;
+            infCyclePreventer++;
             ElementsCollection productNameEls = categoryGoods.getPageProductNames();
-            log.debug("Страница {}. Число товаров: {}", infinityCyclePreventer, productNameEls.size());
-            log.trace("Названия товаров на {} странице: {}", infinityCyclePreventer, productNameEls.texts());
+            log.debug("Страница {}. Число товаров: {}", infCyclePreventer, productNameEls.size());
+            log.trace("Названия товаров на {} странице: {}", infCyclePreventer, productNameEls.texts());
 
             SelenideElement badName = productNameEls.find(not(match("",
                     nameEl -> enumCheckSets.get("Производитель").stream().anyMatch(
                             brand -> nameEl.getText().toLowerCase().contains(brand.toLowerCase())))));
-            boolean badNameExists = badName.exists();
+            badNameExists = badName.exists();
             // Не забыть вернуть значение STRICT!!!
             assertionMode = SOFT;
-            selenideAssertWithStep(badName,
-                    (el, message) -> badNameExists ? el.shouldNot(exist.because(message), Duration.ZERO) : el,
-                    badNameExists
-                            ? "<<<<<< FAIL >>>>>> На стр. " + infinityCyclePreventer + " наименование товара \""
-                            + badName.getText() + "\" не соответствует фильтру \"Производитель\": " + enumCheckSets.get("Производитель")
-                            : "На стр. " + infinityCyclePreventer + " все названия товаров соответствуют фильтру \"Производитель\": "
-                            + enumCheckSets.get("Производитель"));
+            stepSoftAssert("На стр. " + infCyclePreventer + " все названия товаров соответствуют фильтру \"Производитель\". "
+                            + "Слова проверки: " + enumCheckSets.get("Производитель"),
+                    "На стр. " + infCyclePreventer + " наименование товара \"" +(badNameExists ? badName.getText() : "")
+                            + "\" не соответствует фильтру \"Производитель\". Слова проверки: " + enumCheckSets.get("Производитель"),
+                    (failedMess) -> badName.shouldNot(exist.because(failedMess), Duration.ZERO),
+                    badNameExists);
             assertionMode = STRICT;
-        } while (categoryGoods.nextPage() && infinityCyclePreventer < 1000);
-        log.info("Обработано {} страниц товаров", infinityCyclePreventer);
+        } while (categoryGoods.nextPage() && infCyclePreventer < 1000);
+        if (badNameExists) {
+            markOuterStepAsFailedAndStop();
+        }
+        log.info("Обработано {} страниц товаров", infCyclePreventer);
     }
 
 

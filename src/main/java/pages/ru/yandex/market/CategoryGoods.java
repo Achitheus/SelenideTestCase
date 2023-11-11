@@ -12,8 +12,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import static com.codeborne.selenide.CollectionCondition.containExactTextsCaseSensitive;
-import static com.codeborne.selenide.CollectionCondition.sizeGreaterThan;
+import static com.codeborne.selenide.CollectionCondition.*;
 import static com.codeborne.selenide.Condition.*;
 import static com.codeborne.selenide.Selenide.$$x;
 import static com.codeborne.selenide.Selenide.$x;
@@ -107,16 +106,64 @@ public class CategoryGoods extends MarketHeader {
     private void setEnumFilterWithoutWait(String textInFilterTitle, Set<String> targets, CheckboxProcessMode processMode) {
         Set<String> mutableTargets = new HashSet<>(targets);
         SelenideElement filter = getFilterBy(textInFilterTitle);
-        processAvailableCheckBoxes(filter, mutableTargets, processMode, false);
-        if (mutableTargets.isEmpty())
+        processCheckboxesInitial(filter, mutableTargets, processMode);
+        if (!mutableTargets.isEmpty()) {
+            expandCheckboxListAvoidingBug(filter);
+            processCheckboxesExpandedList(filter, mutableTargets, processMode);
+        }
+    }
+
+    private void processCheckboxesInitial(SelenideElement filter, Set<String> mutableTargets,
+                                          CheckboxProcessMode processMode) {
+        ElementsCollection checkboxList = filter.$$x(".//*[@data-zone-name = 'FilterValue']").shouldHave(sizeGreaterThan(0));
+        log.debug("Изначально чекбоксов в фильтре {}. Обрабатываю...", checkboxList.size());
+        ElementsCollection requiredCheckboxes = checkboxList.filterBy(match(
+                "Поиск требуемых чекбоксов среди доступных",
+                el -> mutableTargets.contains(el.getText())));
+        requiredCheckboxes.asFixedIterable().forEach(checkbox -> {
+            clickCheckboxIfNecessary(checkbox, processMode);
+            mutableTargets.remove(checkbox.getText());
+        });
+
+    }
+
+    private void processCheckboxesExpandedList(SelenideElement filter, Set<String> mutableTargets,
+                                               CheckboxProcessMode processMode) {
+        ElementsCollection checkboxList = filter.$$x(".//*[@data-zone-name = 'FilterValue']").shouldHave(sizeGreaterThan(0));
+        log.debug("Когда фильтр развернут, чекбоксов {}. Обрабатываю", checkboxList.size());
+        if (checkboxList.size() > 50 || soCalledDataVirtuosoScrollerIsEnabled(filter)) {
+            processCheckboxesWithSearchField(filter, mutableTargets, processMode);
             return;
-        expandCheckboxListAvoidingBug(filter);
-        if (soCalledDataVirtuosoScrollerIsEnabled(filter)) {
-            log.debug("Обнаружен асинхронный скроллер в фильтре \"{}\"", textInFilterTitle);
-            processEnumFilterWithSearchField(filter, mutableTargets, processMode);
-        } else {
-            log.debug("Асинхронный скроллер в фильтре \"{}\" не обнаружен", textInFilterTitle);
-            processAvailableCheckBoxes(filter, mutableTargets, processMode, true);
+        }
+        ElementsCollection requiredCheckboxes = checkboxList.filterBy(match(
+                "Поиск требуемых чекбоксов среди доступных",
+                el -> mutableTargets.contains(el.getText())));
+        requiredCheckboxes.shouldHave(size(mutableTargets.size()))
+                .asFixedIterable().forEach(checkbox -> {
+                    clickCheckboxIfNecessary(checkbox, processMode);
+                });
+    }
+
+    /**
+     * С помощью поля поиска ищет в {@code filter} чекбоксы по названиям
+     * из {@code mutableTargets} и обрабатывает их в соответствии с {@code processMode}.
+     * Чувствителен к регистру, игнорирует множественные whitespaces.
+     *
+     * @param filter      Фильтр, в котором обрабатываются чекбоксы.
+     * @param targets     Названия чекбоксов, которые следует обработать.
+     * @param processMode Режим обработки чекбоксов (отметить или снять отметку).
+     * @author Юрий Юрченко
+     */
+    private void processCheckboxesWithSearchField(SelenideElement filter, Set<String> targets, CheckboxProcessMode processMode) {
+        log.info("Поиск чекбоксов фильтра с помощью поля поиска");
+        SelenideElement filterSearchField = filter.$x(".//input[@type='text']");
+        for (String target : targets) {
+            filterSearchField.click();
+            filterSearchField.clear();
+            filterSearchField.sendKeys(target);
+            SelenideElement checkbox = filter.$x(".//*[@data-zone-name = 'FilterValue'][1]")
+                    .shouldHave(exactTextCaseSensitive(target));
+            clickCheckboxIfNecessary(checkbox, processMode);
         }
     }
 
@@ -148,65 +195,6 @@ public class CategoryGoods extends MarketHeader {
     }
 
     /**
-     * Ищет на странице в {@code filter} чекбоксы по названиям из {@code mutableTargets}
-     * и обрабатывает их в соответствии с {@code processMode}.
-     * Чувствителен к регистру, проверяет на точное соответствие. <p>
-     * Предполагается, что метод следует вызывать дважды: до раскрытия списка чекбоксов
-     * (со значением {@code strictMode = false}) и после (со {@code strictMode = true}).
-     *
-     * @param filter         Фильтр, в котором обрабатываются чекбоксы.
-     * @param mutableTargets Названия чекбоксов, которые следует обработать.
-     * @param processMode    Режим обработки чекбоксов.
-     * @param strictMode     Режим работы. При {@code false}, метод не падает с ошибкой, когда среди
-     *                       {@code mutableTargets} обнаруживается название для которого
-     *                       на странице нет соответствующего чекбокса.
-     * @author Юрий Юрченко
-     */
-    private void processAvailableCheckBoxes(SelenideElement filter, Set<String> mutableTargets, CheckboxProcessMode processMode, boolean strictMode) {
-        ElementsCollection checkboxList = filter.$$x(".//*[@data-zone-name = 'FilterValue']").shouldHave(sizeGreaterThan(0));
-        if (strictMode)
-            checkboxList.shouldHave(containExactTextsCaseSensitive(mutableTargets.toArray(new String[0])));
-        log.debug("В текущем фильтре обнаружено {} чекбоксов. Обрабатываю", checkboxList.size());
-        for (SelenideElement checkbox : checkboxList) {
-            String checkboxName = checkbox.getText();
-            String target = mutableTargets.stream().filter(
-                    checkboxName::equals).findFirst().orElse("");
-            if (target.isEmpty()) {
-                continue;
-            }
-            clickCheckboxIfNecessary(checkbox, processMode);
-            mutableTargets.remove(target);
-            if (mutableTargets.isEmpty()) {
-                log.info("Все заданные чекбоксы обработаны");
-                return;
-            }
-        }
-    }
-
-    /**
-     * С помощью поля поиска ищет в {@code filter} чекбоксы по названиям
-     * из {@code mutableTargets} и обрабатывает их в соответствии с {@code processMode}.
-     * Чувствителен к регистру, игнорирует множественные whitespaces.
-     *
-     * @param filter      Фильтр, в котором обрабатываются чекбоксы.
-     * @param targetSet   Названия чекбоксов, которые следует обработать.
-     * @param processMode Режим обработки чекбоксов (отметить или снять отметку).
-     * @author Юрий Юрченко
-     */
-    private void processEnumFilterWithSearchField(SelenideElement filter, Set<String> targetSet, CheckboxProcessMode processMode) {
-        log.info("Обрабатываю фильтр с помощью поискового поля");
-        SelenideElement filterSearchField = filter.$x(".//input[@type='text']");
-        for (String target : targetSet) {
-            filterSearchField.click();
-            filterSearchField.clear();
-            filterSearchField.sendKeys(target);
-            SelenideElement checkbox = filter.$x(".//*[@data-zone-name = 'FilterValue'][1]")
-                    .shouldHave(exactTextCaseSensitive(target));
-            clickCheckboxIfNecessary(checkbox, processMode);
-        }
-    }
-
-    /**
      * Производит скролл до объекта, расположенного ниже товаров
      * (при этом в DOM-е появляются все товары страницы).
      *
@@ -224,7 +212,7 @@ public class CategoryGoods extends MarketHeader {
     private void waitGoodsLoading() {
         SelenideElement spinner = $x("//*[@data-grabber='SearchSerp']//*[@data-auto='spinner']");
         log.trace("Ожидаю появления спиннера загрузки товаров");
-        if (spinner.execute(metCondition(el -> el.should(appear, Duration.ofSeconds(1))))) {
+        if (spinner.execute(metCondition(appear, Duration.ofSeconds(1)))) {
             log.trace("Спиннер загрузки товаров появился");
             spinner.should(disappear);
         } else {
@@ -270,7 +258,7 @@ public class CategoryGoods extends MarketHeader {
         log.debug("На случай если список свернется (баг): " +
                 "жду повторного появления кнопки \"развернуть\"");
         SelenideElement expandButton = filter.$(By.tagName("button"));
-        if (!expandButton.execute(metCondition(el -> el.shouldBe(visible, Duration.ofSeconds(3))))) {
+        if (!expandButton.execute(metCondition(appear, Duration.ofSeconds(3)))) {
             log.debug("Кнопка \"развернуть/свернуть\" не появилась");
             return;
         }
@@ -291,7 +279,10 @@ public class CategoryGoods extends MarketHeader {
      * @author Юрий Юрченко
      */
     private boolean soCalledDataVirtuosoScrollerIsEnabled(SelenideElement filter) {
-        return filter.$x(".//*[@data-virtuoso-scroller='true']").exists();
+        boolean enabledAJAX = filter.$x(".//*[@data-virtuoso-scroller='true']")
+                .execute(metCondition(exist, Duration.ofSeconds(1)));
+        log.debug("DataVirtuosoScroller обнаружен: {}", enabledAJAX);
+        return enabledAJAX;
     }
 
     /**
@@ -305,13 +296,13 @@ public class CategoryGoods extends MarketHeader {
     private void clickCheckboxIfNecessary(SelenideElement option, CheckboxProcessMode processMode) {
         switch (processMode) {
             case UNMARK:
-                if (checkBoxIsMarked(option)) option.shouldBe(interactable).click();
+                if (checkBoxIsMarked(option)) option.shouldBe(interactable, Duration.ZERO).click();
                 break;
             case MARK:
-                if (!checkBoxIsMarked(option)) option.shouldBe(interactable).click();
+                if (!checkBoxIsMarked(option)) option.shouldBe(interactable, Duration.ZERO).click();
                 break;
             case CHANGE:
-                option.shouldBe(interactable).click();
+                option.shouldBe(interactable, Duration.ZERO).click();
                 break;
         }
     }

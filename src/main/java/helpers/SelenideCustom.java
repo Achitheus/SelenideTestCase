@@ -1,32 +1,36 @@
 package helpers;
 
 import com.codeborne.selenide.Command;
+import com.codeborne.selenide.Condition;
 import com.codeborne.selenide.SelenideElement;
-import com.codeborne.selenide.ex.UIAssertionError;
+import com.codeborne.selenide.Stopwatch;
 
-import java.util.function.Function;
+import java.time.Duration;
 
 public class SelenideCustom {
     /**
-     * Формирует лямбду {@link Command}, сообщающую прошел ли вызов {@code function} без {@link UIAssertionError}.
-     * Работает так же как и, например, {@link SelenideElement#isDisplayed()} с той лишь разницей, что умеет ждать. Используется в
+     * Формирует лямбду {@link Command}, сообщающую выполнилось ли условие {@code condition}
+     * в течение времени {@code timeout}.
+     * Работает так же как и {@link SelenideElement#is(Condition)} с той лишь разницей, что умеет ждать. Используется в
      * качестве параметра для метода {@link SelenideElement#execute(Command)}.<p>
      * Пример использования:<pre>
-     *         if(button.execute(metCondition(element -> element.should(appear)))){...}</pre>
+     *     if (button.execute(metCondition(appear, Duration.ofSeconds(2)))) {...}</pre>
      *
-     * @param function Метод, способный вызвать {@link UIAssertionError}.
-     * @return Лямбду, возвращающую {@code true}, если вызов  {@code function} прошел без {@link UIAssertionError},
-     * иначе - {@code false}.
-     * @author Юрий Юрченко
+     * @param condition Проверяемое условие.
+     * @param timeout   Предполагаемое время, за которое условие может выполниться.
+     * @return Лямбду, возвращающую {@code true}, если условие {@code condition} наступило за
+     * время {@code timeout}, иначе - {@code false}.
      */
-    public static Command<Boolean> metCondition(Function<SelenideElement, SelenideElement> function) {
+    public static Command<Boolean> metCondition(Condition condition, Duration timeout) {
+        Stopwatch stopwatch = new Stopwatch(timeout.toMillis());
         return (proxy, locator, args) -> {
-            try {
-                function.apply(proxy);
-                return true;
-            } catch (UIAssertionError th) {
-                return false;
-            }
+            do {
+                if (proxy.is(condition)) {
+                    return true;
+                }
+                stopwatch.sleep(200);
+            } while (!stopwatch.isTimeoutReached());
+            return false;
         };
     }
 

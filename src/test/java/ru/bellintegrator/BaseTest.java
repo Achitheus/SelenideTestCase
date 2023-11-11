@@ -52,8 +52,4 @@ public class BaseTest {
         options.addArguments("--profile-directory=" + testProperties.profileDir());
     }
 
-    @AfterEach
-    public void ending() {
-        Selenide.closeWindow();
-    }
 }

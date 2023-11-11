@@ -7,13 +7,13 @@ import org.aeonbits.owner.Config;
         "system:env",
         "file:src/test/resources/test.properties"})
 public interface TestProperties extends Config {
-    @Key("chrome.dir")
+    @Key("user.data.dir")
     String chromeDir();
 
-    @Key("chrome.profile.dir")
+    @Key("profile.dir")
     String profileDir();
 
-    @Key("chrome.profile.use")
+    @Key("use.profile")
     boolean useChromeProfile();
 
 
