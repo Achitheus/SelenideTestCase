@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <configuration>
-    <appender name = "console" class = "ch.qos.logback.core.ConsoleAppender">
+    <appender name="console" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
             <charset>UTF-8</charset>
             <pattern>%-5level [%file:%line] %msg%n</pattern>
         </encoder>
     </appender>
 
-    <appender name = "file" class = "ch.qos.logback.core.FileAppender" append="false">
+    <appender name="file" class="ch.qos.logback.core.FileAppender" append="false">
         <file>${user.dir}\log\selenideTestCase.log</file>
         <encoder>
             <charset>UTF-8</charset>
@@ -17,6 +17,7 @@
 
     <logger name="ru.bellintegrator" level="info"/>
     <logger name="pages.ru.yandex.market" level="debug"/>
+    <logger name="helpers" level="debug"/>
 
     <root level="error">
         <appender-ref ref="file"/>

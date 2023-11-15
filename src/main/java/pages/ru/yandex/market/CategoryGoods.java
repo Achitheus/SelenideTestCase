@@ -2,6 +2,8 @@ package pages.ru.yandex.market;
 
 import com.codeborne.selenide.ElementsCollection;
 import com.codeborne.selenide.SelenideElement;
+import helpers.Pageable;
+import helpers.PageableChecker;
 import io.qameta.allure.Step;
 import org.openqa.selenium.By;
 import org.slf4j.Logger;
@@ -23,7 +25,7 @@ import static helpers.SelenideCustom.metCondition;
  *
  * @author Юрий Юрченко
  */
-public class CategoryGoods extends MarketHeader {
+public class CategoryGoods extends MarketHeader implements Pageable {
 
     public static final Logger log = LoggerFactory.getLogger(CategoryGoods.class);
 
@@ -92,6 +94,10 @@ public class CategoryGoods extends MarketHeader {
      */
     public CategoryGoods setEnumFilter(String textInFilterTitle, Set<String> targets) {
         return setEnumFilter(textInFilterTitle, targets, CheckboxProcessMode.MARK);
+    }
+
+    public PageableChecker<CategoryGoods> schedulePageableCheck() {
+        return new PageableChecker<>(this);
     }
 
     /**
