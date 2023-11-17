@@ -1,4 +1,4 @@
-package helpers;
+package helpers.selenide;
 
 import com.codeborne.selenide.Command;
 import com.codeborne.selenide.Condition;
@@ -6,6 +6,7 @@ import com.codeborne.selenide.SelenideElement;
 import com.codeborne.selenide.Stopwatch;
 
 import java.time.Duration;
+import java.util.Collection;
 
 public class SelenideCustom {
     /**
@@ -32,6 +33,10 @@ public class SelenideCustom {
             } while (!stopwatch.isTimeoutReached());
             return false;
         };
+    }
+
+    public static Condition anyText(Collection<String> texts) {
+        return new AnyText(texts);
     }
 
 }

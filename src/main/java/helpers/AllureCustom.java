@@ -36,8 +36,8 @@ public class AllureCustom {
                                       final Consumer<String> messagedAssert, final boolean markStepAsFailed) {
         Allure.step(markStepAsFailed ? failMessage : passMessage
                 , () -> {
-                    messagedAssert.accept(failMessage);
                     if (markStepAsFailed) {
+                        messagedAssert.accept(failMessage);
                         markOuterStepAsFailedAndStop();
                     }
                 });

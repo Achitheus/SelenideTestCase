@@ -15,7 +15,9 @@ import ru.bellintegrator.BaseTest;
 import java.util.Map;
 import java.util.Set;
 
+import static com.codeborne.selenide.Condition.match;
 import static com.codeborne.selenide.Selenide.open;
+import static helpers.selenide.SelenideCustom.anyText;
 
 public class MarketTest extends BaseTest {
     public static final Logger log = LoggerFactory.getLogger(MarketTest.class);
@@ -47,17 +49,16 @@ public class MarketTest extends BaseTest {
     @MethodSource(value = "helpers.DataProvider#checkSearchResultsByEnumFilter")
     public void marketTest(String url, String service, String section, String category,
                            Map<String, Set<String>> enumFilters, Map<String, Set<String>> enumCheckSets) {
-                open(url, YandexMain.class)
-                        .goToService(service, MarketMain.class)
-                        .toSectionCategory(section, category)
-                        .setEnumFilters(enumFilters, CheckboxProcessMode.MARK)
-                        .schedulePageableCheck()
-                        .addCheckThatEachElement("соответствует фильтру \"Производитель\". Слова проверки: " + enumCheckSets.get("Производитель"),
-                                CategoryGoods::getPageProductNames,
-                                nameEl -> enumCheckSets.get("Производитель").stream().anyMatch(
-                                        brand -> nameEl.getText().toLowerCase().contains(brand.toLowerCase())))
-                        .checkAllPages(true)
-                        .start();
+        open(url, YandexMain.class)
+                .goToService(service, MarketMain.class)
+                .toSectionCategory(section, category)
+                .setEnumFilters(enumFilters, CheckboxProcessMode.MARK)
+                .schedulePageableCheck()
+                .checkAllPages(true)
+                .addCheckThatEachElement("соответствует фильтру \"Производитель\". Слова проверки: " + enumCheckSets.get("Производитель"),
+                        CategoryGoods::getPageProductNames,
+                        anyText(enumFilters.get("Производитель")))
+                .start();
     }
 
 }

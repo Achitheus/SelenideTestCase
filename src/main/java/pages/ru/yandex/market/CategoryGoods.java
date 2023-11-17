@@ -18,7 +18,7 @@ import static com.codeborne.selenide.CollectionCondition.*;
 import static com.codeborne.selenide.Condition.*;
 import static com.codeborne.selenide.Selenide.$$x;
 import static com.codeborne.selenide.Selenide.$x;
-import static helpers.SelenideCustom.metCondition;
+import static helpers.selenide.SelenideCustom.metCondition;
 
 /**
  * Класс, предоставляющий функционал для взаимодействия со страницей товаров.

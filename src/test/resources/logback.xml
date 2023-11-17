@@ -17,7 +17,7 @@
 
     <logger name="ru.bellintegrator" level="info"/>
     <logger name="pages.ru.yandex.market" level="debug"/>
-    <logger name="helpers" level="debug"/>
+    <logger name="helpers" level="info"/>
 
     <root level="error">
         <appender-ref ref="file"/>
