@@ -9,8 +9,8 @@
     <version>1.0-SNAPSHOT</version>
 
     <properties>
-        <maven.compiler.source>9</maven.compiler.source>
-        <maven.compiler.target>9</maven.compiler.target>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <junit.jupiter.version>5.7.0-M1</junit.jupiter.version>
         <seleniumhq.selenium>3.141.59</seleniumhq.selenium>
@@ -77,8 +77,13 @@
     </dependencies>
 
 
-
     <build>
+        <testResources>
+            <testResource>
+                <directory>src/test/resources</directory>
+                <filtering>true</filtering>
+            </testResource>
+        </testResources>
         <plugins>
             <plugin>
                 <groupId>io.qameta.allure</groupId>
@@ -120,5 +125,29 @@
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <profile>
+            <id>env-dev</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <properties>
+                <maven.profile>dev</maven.profile>
+                <headless>false</headless>
+                <use.browser.profile>true</use.browser.profile>
+                <use.selenoid>false</use.selenoid>
+            </properties>
+        </profile>
+        <profile>
+            <id>env-test</id>
+            <properties>
+                <maven.profile>test</maven.profile>
+                <headless>true</headless>
+                <use.browser.profile>false</use.browser.profile>
+                <use.selenoid>true</use.selenoid>
+            </properties>
+        </profile>
+    </profiles>
 
 </project>

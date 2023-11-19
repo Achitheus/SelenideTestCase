@@ -35,8 +35,19 @@ public class SelenideCustom {
         };
     }
 
-    public static Condition anyText(Collection<String> texts) {
-        return new AnyText(texts);
+    /**
+     * Assert that given element's TEXT case-insensitively CONTAINS at least
+     * one of the given {@code texts}. Assertion fails if specified collection is empty.
+     *
+     * <p>NB! Ignores multiple whitespaces between words.</p>
+     * <p>NB! Nulls and blank strings are not allowed in the specified collection
+     * (because any element does contain an empty text).</p>
+     *
+     * @throws IllegalArgumentException If specified collection contains {@code null}s or blank strings.
+     * @since Selenide 7.0.3
+     */
+    public static Condition oneOfTexts(Collection<String> texts) {
+        return new OneOfTexts(texts);
     }
 
 }

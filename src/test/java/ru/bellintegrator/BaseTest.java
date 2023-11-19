@@ -6,7 +6,6 @@ import com.codeborne.selenide.junit5.SoftAssertsExtension;
 import com.codeborne.selenide.logevents.SelenideLogger;
 import helpers.TestProperties;
 import io.qameta.allure.selenide.AllureSelenide;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInfo;
@@ -15,6 +14,7 @@ import org.openqa.selenium.chrome.ChromeOptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static com.codeborne.selenide.Selenide.open;
 import static helpers.Properties.testProperties;
 
 @ExtendWith({SoftAssertsExtension.class})
@@ -23,14 +23,30 @@ public class BaseTest {
 
     @BeforeAll
     public static void setup() {
-        log.info("\n<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<   NEW TESTS RUN   >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>   <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<   NEW TESTS RUN   >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>   <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<   NEW TESTS RUN   >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
         SelenideLogger.addListener("AllureSelenide",
                 new AllureSelenide().includeSelenideSteps(false));
+        log.info("\n<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<   NEW TESTS RUN   >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>   <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<   NEW TESTS RUN   >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>   <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<   NEW TESTS RUN   >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+        log.info("Active maven profile: {}", testProperties.mavenProfile());
+        ChromeOptions options = new ChromeOptions();
+        Configuration.browserCapabilities = options;
+        Configuration.browser = "chrome";
+        Configuration.timeout = 6_000;
+        Configuration.browserSize = "1920x1080";
+        Configuration.headless = testProperties.headless();
+        Configuration.remote = testProperties.useSelenoid() ? "http://localhost:4444/wd/hub" : null;
+        options.addArguments("--disable-extensions");
+        if (testProperties.headless()) {
+            options.addArguments("--user-agent=" + editedUserAgent());
+        }
+        if (testProperties.useBrowserProfile()) {
+            options.addArguments("--user-data-dir=" + testProperties.chromeDir());
+            options.addArguments("--profile-directory=" + testProperties.profileDir());
+        }
     }
 
     /**
      * Настройка тестов и окружения. Тесты запускаются из-под профиля хрома, если соответствующее
-     * значение проперти {@link TestProperties#useChromeProfile()} установлено в {@code true}.
+     * значение проперти {@link TestProperties#useBrowserProfile()} установлено в {@code true}.
      * Перед запуском каждого теста выводит его название в лог.
      *
      * @param testInfo Объект, содержащий информацию о запускаемом тесте.
@@ -39,17 +55,16 @@ public class BaseTest {
     @BeforeEach
     public void options(TestInfo testInfo) {
         log.info(" <<<<<<<<<  " + testInfo.getDisplayName() + "  is running >>>>>>>>>");
-        ChromeOptions options = new ChromeOptions();
-        Configuration.browserCapabilities = options;
-        Configuration.browser = "chrome";
-        Configuration.timeout = 6_000;
-        Configuration.browserSize = "1920x1080";
-        options.addArguments("--disable-extensions");
-        if (!testProperties.useChromeProfile()) {
-            return;
-        }
-        options.addArguments("--user-data-dir=" + testProperties.chromeDir());
-        options.addArguments("--profile-directory=" + testProperties.profileDir());
+    }
+
+    public static String editedUserAgent() {
+        open("http://github.com");
+        String currentUserAgent = Selenide.getUserAgent();
+        log.info("User agent supposed to change is: {}", currentUserAgent);
+        String editedUserAgent = currentUserAgent.replaceAll("(Headless)", "");
+        log.info("User-Agent value can be used: {}", editedUserAgent);
+        Selenide.closeWebDriver();
+        return editedUserAgent;
     }
 
 }

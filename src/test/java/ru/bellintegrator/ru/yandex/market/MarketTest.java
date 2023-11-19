@@ -15,9 +15,8 @@ import ru.bellintegrator.BaseTest;
 import java.util.Map;
 import java.util.Set;
 
-import static com.codeborne.selenide.Condition.match;
 import static com.codeborne.selenide.Selenide.open;
-import static helpers.selenide.SelenideCustom.anyText;
+import static helpers.selenide.SelenideCustom.oneOfTexts;
 
 public class MarketTest extends BaseTest {
     public static final Logger log = LoggerFactory.getLogger(MarketTest.class);
@@ -57,7 +56,7 @@ public class MarketTest extends BaseTest {
                 .checkAllPages(true)
                 .addCheckThatEachElement("соответствует фильтру \"Производитель\". Слова проверки: " + enumCheckSets.get("Производитель"),
                         CategoryGoods::getPageProductNames,
-                        anyText(enumFilters.get("Производитель")))
+                        oneOfTexts(enumCheckSets.get("Производитель")))
                 .start();
     }
 
