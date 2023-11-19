@@ -1,6 +1,7 @@
 package ru.bellintegrator.ru.yandex.market;
 
 import io.qameta.allure.Feature;
+import io.qameta.allure.Owner;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -42,9 +43,10 @@ public class MarketTest extends BaseTest {
      * @param enumCheckSets Наборы проверочных слов для проверки соответствия товаров установленным фильтрам {@code enumFilters}.
      * @author Юрий Юрченко
      */
+    @Owner("Юрий Юрченко")
     @Feature("Поиск товаров")
     @DisplayName("Соответствие результатов поиска установленным фильтрам")
-    @ParameterizedTest(name = "{displayName} : {arguments}")
+    @ParameterizedTest(name = "[{index}]: {arguments}")
     @MethodSource(value = "helpers.DataProvider#checkSearchResultsByEnumFilter")
     public void marketTest(String url, String service, String section, String category,
                            Map<String, Set<String>> enumFilters, Map<String, Set<String>> enumCheckSets) {

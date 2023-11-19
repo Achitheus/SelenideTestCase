@@ -20,6 +20,7 @@ public class DataProvider {
         String serviceTitle = "Маркет";
         String section = "Электроника";
         String category = "Смартфоны";
+        Map<String, Set<String>> enumFilters0 = Map.of("Производитель", Set.of("ASUS", "Black Shark", "OnePlus", "Apple", "Google", "Seals"));
         Map<String, Set<String>> enumFilters1 = Map.of("Производитель", Set.of("ASUS"));
         Map<String, Set<String>> enumFilters2 = Map.of("Производитель", Set.of("Black Shark"));
         Map<String, Set<String>> enumFilters3 = Map.of("Производитель", Set.of("OnePlus"));
@@ -27,6 +28,7 @@ public class DataProvider {
         Map<String, Set<String>> enumFilters5 = Map.of("Производитель", Set.of("Google"));
         Map<String, Set<String>> enumFilters6 = Map.of("Производитель", Set.of("Seals"));
 
+        Map<String, Set<String>> enumCheckSets0 = Map.of("Производитель", enumFilters0.get("Производитель"));
         Map<String, Set<String>> enumCheckSets1 = Map.of("Производитель", enumFilters1.get("Производитель"));
         Map<String, Set<String>> enumCheckSets2 = Map.of("Производитель", enumFilters2.get("Производитель"));
         Map<String, Set<String>> enumCheckSets3 = Map.of("Производитель", Set.of("OnePlus", "One Plus"));
@@ -34,6 +36,7 @@ public class DataProvider {
         Map<String, Set<String>> enumCheckSets5 = Map.of("Производитель", enumFilters5.get("Производитель"));
         Map<String, Set<String>> enumCheckSets6 = Map.of("Производитель", enumFilters6.get("Производитель"));
         return Stream.of(
+                Arguments.of(url, serviceTitle, section, category, enumFilters0, enumCheckSets0),
                 Arguments.of(url, serviceTitle, section, category, enumFilters1, enumCheckSets1),
                 Arguments.of(url, serviceTitle, section, category, enumFilters2, enumCheckSets2),
                 Arguments.of(url, serviceTitle, section, category, enumFilters3, enumCheckSets3),
