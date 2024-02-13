@@ -1,5 +1,6 @@
 package ru.bellintegrator.ru.yandex.market;
 
+import helpers.pageable.PredicateCheckThatEachElement;
 import io.qameta.allure.Feature;
 import io.qameta.allure.Owner;
 import org.junit.jupiter.api.DisplayName;
@@ -55,11 +56,14 @@ public class MarketTest extends BaseTest {
                 .toSectionCategory(section, category)
                 .setEnumFilters(enumFilters, CheckboxProcessMode.MARK)
                 .schedulePageableCheck()
-                .checkAllPages(true)
-                .addCheckThatEachElement("соответствует фильтру \"Производитель\". Слова проверки: " + enumCheckSets.get("Производитель"),
-                        CategoryGoods::getPageProductNames,
-                        oneOfTexts(enumCheckSets.get("Производитель")))
-                .start();
+                .beLazy(false)
+                .addCheck(new PredicateCheckThatEachElement<>(
+                                "соответствует фильтру \"Производитель\". Слова проверки: " + enumCheckSets.get("Производитель"),
+                                CategoryGoods::getPageProductNames,
+                                el -> el.has(oneOfTexts(enumCheckSets.get("Производитель")))
+                        )
+                )
+                .run();
     }
 
 }

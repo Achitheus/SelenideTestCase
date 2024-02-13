@@ -2,8 +2,9 @@ package pages.ru.yandex.market;
 
 import com.codeborne.selenide.ElementsCollection;
 import com.codeborne.selenide.SelenideElement;
-import helpers.Pageable;
-import helpers.PageableChecker;
+import com.codeborne.selenide.WebDriverRunner;
+import helpers.pageable.Pageable;
+import helpers.pageable.PageableChecker;
 import io.qameta.allure.Step;
 import org.openqa.selenium.By;
 import org.slf4j.Logger;
@@ -14,7 +15,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import static com.codeborne.selenide.CollectionCondition.*;
+import static com.codeborne.selenide.CollectionCondition.size;
+import static com.codeborne.selenide.CollectionCondition.sizeGreaterThan;
 import static com.codeborne.selenide.Condition.*;
 import static com.codeborne.selenide.Selenide.$$x;
 import static com.codeborne.selenide.Selenide.$x;
@@ -31,8 +33,14 @@ public class CategoryGoods extends MarketHeader implements Pageable {
 
     private final String productNamesSelector = "//*[@id='searchResults']//*[@data-auto='snippet-title-header']";
 
-    private final String elementBelowTheGoodsSelector = "//noindex//*[@data-auto='creditDisclaimer']";
+    private final String elementBelowTheGoodsSelector = "//*[@data-grabber='SearchLegalInfo']";
 
+    private final String productPricesSelector = "//main[@id='searchResults']//*[@data-autotest-id='product-snippet']//*[@data-auto='price-value' or @data-auto='snippet-price-current']";
+
+    public ElementsCollection getPrices() {
+        scrollToBottom();
+        return $$x(productPricesSelector);
+    }
     /**
      * Обрабатывает чекбоксы фильтров перечислений в режиме {@code processMode}, после чего
      * ждет загрузки товаров.
@@ -97,7 +105,7 @@ public class CategoryGoods extends MarketHeader implements Pageable {
     }
 
     public PageableChecker<CategoryGoods> schedulePageableCheck() {
-        return new PageableChecker<>(this);
+        return new PageableChecker<>(this, WebDriverRunner.getWebDriver());
     }
 
     /**
